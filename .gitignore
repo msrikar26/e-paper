@@ -1,0 +1,8 @@
+node_modules/
+newspulse.db
+uploads/*
+!uploads/.gitkeep
+.env
+cookies.txt
+*.log
+.DS_Store

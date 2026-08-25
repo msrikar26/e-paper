@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsPulse Admin Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #c0392b; --dark: #1a1a2e; --card: #fff; --bg: #f0f2f5; --text: #333; --border: #e0e0e0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+        .login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--dark); }
+        .login-box { background: var(--card); padding: 40px; border-radius: 12px; width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        .login-box h2 { text-align: center; margin-bottom: 24px; color: var(--dark); }
+        .login-box h2 span { color: var(--primary); }
+        .login-box input { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; margin-bottom: 14px; outline: none; }
+        .login-box input:focus { border-color: var(--primary); }
+        .login-box button { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .login-box button:hover { background: #a93226; }
+        .login-error { color: var(--primary); text-align: center; margin-bottom: 10px; font-size: 13px; display: none; }
+        .hidden { display: none !important; }
+        .admin-layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 240px; background: var(--dark); color: #fff; padding: 20px 0; flex-shrink: 0; }
+        .sidebar h3 { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 20px; }
+        .sidebar h3 span { color: var(--primary); }
+        .sidebar nav { margin-top: 16px; }
+        .sidebar nav a { display: block; padding: 12px 20px; color: #aaa; text-decoration: none; font-size: 14px; transition: 0.2s; }
+        .sidebar nav a:hover, .sidebar nav a.active { background: rgba(255,255,255,0.08); color: #fff; border-left: 3px solid var(--primary); }
+        .main-area { flex: 1; padding: 24px; overflow-y: auto; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .topbar h1 { font-size: 22px; }
+        .topbar .logout { background: var(--primary); color: #fff; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--card); padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .stat-card .number { font-size: 28px; font-weight: 700; color: var(--primary); }
+        .stat-card .label { font-size: 13px; color: #888; margin-top: 4px; }
+        .card { background: var(--card); border-radius: 10px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+        .card h3 { margin-bottom: 16px; font-size: 17px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: #a93226; }
+        .btn-danger { background: #e74c3c; color: #fff; }
+        .btn-success { background: #27ae60; color: #fff; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th { background: #f8f9fa; font-weight: 600; color: #555; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #fff; }
+        .badge-green { background: #27ae60; }
+        .badge-red { background: #e74c3c; }
+        .badge-blue { background: #2980b9; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #555; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 2px solid var(--border); border-radius: 6px; font-size: 14px; outline: none; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-check { display: flex; align-items: center; gap: 8px; }
+        .form-check input[type="checkbox"] { width: auto; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: var(--card); border-radius: 12px; padding: 24px; width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .modal h3 { margin-bottom: 20px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .btn-secondary { background: #95a5a6; color: #fff; }
+        .empty-state { text-align: center; padding: 40px; color: #888; }
+        .toast { position: fixed; top: 20px; right: 20px; background: #27ae60; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 14px; z-index: 2000; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-page" id="loginPage">
+    <div class="login-box">
+        <h2>News<span>Pulse</span> Admin</h2>
+        <div class="login-error" id="loginError">Invalid username or password</div>
+        <input type="text" id="loginUser" placeholder="Username" value="admin">
+        <input type="password" id="loginPass" placeholder="Password" value="admin123">
+        <button onclick="doLogin()">Sign In</button>
+        <div style="text-align:center;margin-top:14px">
+            <a href="#" onclick="openForgotPasswordModal()" style="color:#666;font-size:13px;text-decoration:none">Forgot password?</a>
+        </div>
+    </div>
+</div>
+
+<!-- ADMIN -->
+<div class="admin-layout hidden" id="adminLayout">
+    <div class="sidebar">
+        <h3>News<span>Pulse</span></h3>
+        <nav>
+            <a href="#" onclick="showSection('dashboard')" class="active" id="nav-dashboard">📊 Dashboard</a>
+            <a href="#" onclick="showSection('articles')" id="nav-articles">📰 Articles</a>
+            <a href="#" onclick="showSection('categories')" id="nav-categories">🏷️ Categories</a>
+            <a href="#" onclick="showSection('reviews')" id="nav-reviews">⭐ Reviews</a>
+            <a href="#" onclick="showSection('photos')" id="nav-photos">📷 Photos</a>
+            <a href="#" onclick="showSection('breaking')" id="nav-breaking">🔔 Breaking News</a>
+            <a href="#" onclick="showSection('ads')" id="nav-ads">💰 Ad Management</a>
+            <a href="#" onclick="showSection('users')" id="nav-users">👥 Team Users</a>
+            <a href="#" onclick="showSection('subscribers')" id="nav-subscribers">📧 Subscribers</a>
+            <a href="/" target="_blank">🌐 View Site</a>
+        </nav>
+    </div>
+    <div class="main-area">
+        <div class="topbar">
+            <h1 id="pageTitle">Dashboard</h1>
+            <div style="display:flex;gap:10px;align-items:center">
+                <span id="currentUser" style="font-size:13px;color:#888"></span>
+                <button class="btn btn-secondary" onclick="openChangePasswordModal()">🔑 Change Password</button>
+                <button class="logout" onclick="doLogout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="section-dashboard">
+            <div class="stats-grid">
+                <div class="stat-card" style="border-left:4px solid #27ae60"><div class="number" id="statOnline" style="color:#27ae60">0</div><div class="label">🟢 Online Now</div></div>
+                <div class="stat-card" style="border-left:4px solid #2980b9"><div class="number" id="statTotalVisits" style="color:#2980b9">0</div><div class="label">Total Visits</div></div>
+                <div class="stat-card" style="border-left:4px solid #8e44ad"><div class="number" id="statUniqueVisitors" style="color:#8e44ad">0</div><div class="label">Unique Visitors</div></div>
+                <div class="stat-card" style="border-left:4px solid #e67e22"><div class="number" id="statArticles">0</div><div class="label">Articles</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:20px">
+                <div class="card">
+                    <h3>📈 Visits Over Time (7 Days)</h3>
+                    <canvas id="chartVisits" height="220"></canvas>
+                </div>
+                <div class="card">
+                    <h3>📱 Traffic by Device</h3>
+                    <canvas id="chartDevice" height="220"></canvas>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+                <div class="card">
+                    <h3>🕐 Visits by Hour (Last 24h)</h3>
+                    <canvas id="chartHourly" height="200"></canvas>
+                </div>
+                <div class="card">
+                    <h3>🏆 Most Visited Pages</h3>
+                    <div id="topPagesList" style="padding:10px 0"><div style="text-align:center;color:#888">Loading...</div></div>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+                <div class="card">
+                    <h3>📧 Subscriber Growth (30 Days)</h3>
+                    <canvas id="chartSubscriberGrowth" height="200"></canvas>
+                </div>
+                <div class="card">
+                    <h3>📈 Cumulative Subscribers</h3>
+                    <canvas id="chartSubscriberCumulative" height="200"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Recent Articles</h3>
+                <table><thead><tr><th>Title</th><th>Category</th><th>Date</th></tr></thead>
+                <tbody id="recentArticles"></tbody></table>
+            </div>
+        </div>
+
+        <!-- ARTICLES -->
+        <div id="section-articles" class="hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h3>All Articles</h3>
+                    <button class="btn btn-primary" onclick="openArticleModal()">+ New Article</button>
+                </div>
+                <table><thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="articlesTable"></tbody></table>
+            </div>
+        </div>
+
+        <!-- CATEGORIES -->
+        <div id="section-categories" class="hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Categories</h3>
+                    <button class="btn btn-primary" onclick="openCategoryModal()">+ New Category</button>
+                </div>
+                <table><thead><tr><th>Name</th><th>Slug</th><th>Color</th><th>Actions</th></tr></thead>
+                <tbody id="categoriesTable"></tbody></table>
+            </div>
+        </div>
+
+        <!-- REVIEWS -->
+        <div id="section-reviews" class="hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Movie Reviews</h3>
+                    <button class="btn btn-primary" onclick="openReviewModal()">+ New Review</button>
+                </div>
+                <table><thead><tr><th>Title</th><th>Rating</th><th>Actions</th></tr></thead>
+                <tbody id="reviewsTable"></tbody></table>
+            </div>
+        </div>
+
+        <!-- PHOTOS -->
+        <div id="section-photos" class="hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Photo Galleries</h3>
+                    <button class="btn btn-primary" onclick="openPhotoModal()">+ New Gallery</button>
+                </div>
+                <table><thead><tr><th>Title</th><th>Gallery</th><th>Photos</th><th>Actions</th></tr></thead>
+                <tbody id="photosTable"></tbody></table>
+            </div>
+        </div>
+
+        <!-- BREAKING NEWS -->
+        <div id="section-breaking" class="hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Breaking News Ticker</h3>
+                    <button class="btn btn-primary" onclick="openBreakingModal()">+ Add Breaking News</button>
+                </div>
+                <table><thead><tr><th>Headline</th><th>Link</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="breakingTable"></tbody></table>
+            </div>
+        </div>
+
+        <!-- USERS -->
+        <div id="section-users" class="hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Team Users</h3>
+                    <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
+                </div>
+                <p style="font-size:13px;color:#888;margin-bottom:16px">Invite your team members. They can log in and manage content based on their role.</p>
+                <table><thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+                <tbody id="usersTable"></tbody></table>
+            </div>
+        </div>
+
+        <!-- ADS -->
+        <div id="section-ads" class="hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Ad Management</h3>
+                    <p style="font-size:13px;color:#888">Update your Google AdSense code for each position</p>
+                </div>
+                <div id="adsContainer"></div>
+            </div>
+        </div>
+
+        <!-- SUBSCRIBERS -->
+        <div id="section-subscribers" class="hidden">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+                <div class="stat-card" style="border-left:4px solid #27ae60"><div class="number" id="statSubscribers" style="color:#27ae60">0</div><div class="label">Active Subscribers</div></div>
+                <div class="stat-card" style="border-left:4px solid #2980b9"><div class="number" id="statEmailUpdates">0</div><div class="label">Emails Sent</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📧 Subscribers</h3>
+                    </div>
+                    <div style="background:var(--bg,#f0f2f5);border-radius:8px;padding:16px;margin-bottom:16px">
+                        <h4 style="margin-bottom:10px;font-size:14px">➕ Add Subscriber Manually</h4>
+                        <div style="display:flex;gap:10px">
+                            <input type="email" id="manualSubEmail" placeholder="Email address" style="flex:1;padding:10px 14px;border:2px solid var(--border);border-radius:6px;font-size:14px;outline:none">
+                            <input type="text" id="manualSubName" placeholder="Name (optional)" style="flex:1;padding:10px 14px;border:2px solid var(--border);border-radius:6px;font-size:14px;outline:none">
+                            <button class="btn btn-primary" onclick="addManualSubscriber()">Add</button>
+                        </div>
+                        <div id="manualSubResult" style="margin-top:8px"></div>
+                    </div>
+                    <table><thead><tr><th>Email</th><th>Name</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+                    <tbody id="subscribersTable"></tbody></table>
+                </div>
+                <div class="card">
+                    <h3>✉️ Send News Update</h3>
+                    <p style="font-size:13px;color:#888;margin-bottom:16px">Compose and send a news update to all active subscribers</p>
+                    <div class="form-group"><label>Email Subject</label><input type="text" id="updateSubject" placeholder="Today's Top Stories"></div>
+                    <div class="form-group"><label>Email Content (HTML)</label><textarea id="updateBody" style="min-height:200px" placeholder="<h2>Today's Headlines</h2><p>Write your update here...</p>"></textarea></div>
+                    <button class="btn btn-primary" onclick="sendEmailUpdate()" style="width:100%">📤 Send to All Subscribers</button>
+                    <div id="sendResult" style="margin-top:12px"></div>
+                    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+                        <h4 style="margin-bottom:12px;font-size:14px">📋 Past Updates</h4>
+                        <div id="pastUpdates"><div style="text-align:center;color:#888;font-size:13px">No updates sent yet</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:20px">
+                <h3>⚙️ SMTP Email Settings</h3>
+                <p style="font-size:13px;color:#888;margin-bottom:16px">Configure your email server to send actual emails to subscribers. Use Gmail, Outlook, SendGrid, Mailgun, or any SMTP provider.</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                    <div class="form-group"><label>SMTP Host</label><input type="text" id="smtpHost" placeholder="smtp.gmail.com"></div>
+                    <div class="form-group"><label>SMTP Port</label><input type="number" id="smtpPort" placeholder="587" value="587"></div>
+                    <div class="form-group"><label>Email Address</label><input type="email" id="smtpUser" placeholder="your-email@gmail.com"></div>
+                    <div class="form-group"><label>Password / App Password</label><input type="password" id="smtpPass" placeholder="••••••••"></div>
+                    <div class="form-group"><label>From Name</label><input type="text" id="smtpFrom" placeholder="noreply@newspulse.com"></div>
+                    <div class="form-group" style="display:flex;align-items:end;gap:8px">
+                        <label class="form-check" style="margin-bottom:14px"><input type="checkbox" id="smtpSecure"> Use SSL/TLS (port 465)</label>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:8px">
+                    <button class="btn btn-primary" onclick="saveSmtpSettings()">💾 Save SMTP Settings</button>
+                    <button class="btn btn-secondary" onclick="testSmtpConnection()">🔍 Test Connection</button>
+                </div>
+                <div id="smtpResult" style="margin-top:12px"></div>
+                <div style="margin-top:16px;padding:12px;background:var(--bg,#f0f2f5);border-radius:8px;font-size:12px;color:#888">
+                    <strong>📌 Popular SMTP Settings:</strong><br>
+                    <b>Gmail:</b> smtp.gmail.com / 587 (use App Password, not regular password)<br>
+                    <b>Outlook:</b> smtp.office365.com / 587<br>
+                    <b>Yahoo:</b> smtp.mail.yahoo.com / 587<br>
+                    <b>SendGrid:</b> smtp.sendgrid.net / 587 (username = "apikey")<br>
+                    <b>Mailgun:</b> smtp.mailgun.org / 587
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- MODALS (outside admin layout so they work on login page too) -->
+<div class="modal-overlay hidden" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" id="modalContent" onclick="event.stopPropagation()"></div>
+</div>
+
+<script>
+// ===== API HELPERS =====
+async function api(url, opts = {}) {
+    const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts,
+        body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    return res.json();
+}
+
+function toast(msg, undoCallback) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = msg + (undoCallback ? ' <button onclick="this.parentElement.undoFn()" style="background:none;border:none;color:#fff;text-decoration:underline;cursor:pointer;margin-left:8px;font-size:13px;font-weight:700">Undo</button>' : '');
+    if (undoCallback) t.undoFn = async function() {
+        await undoCallback();
+        t.remove();
+        toast('Action undone');
+    };
+    document.body.appendChild(t);
+    const timer = setTimeout(() => t.remove(), undoCallback ? 8000 : 3000);
+    if (undoCallback) t.undoFn = async function() {
+        clearTimeout(timer);
+        await undoCallback();
+        t.remove();
+        toast('Action undone');
+    };
+}
+
+// ===== UNDO DELETES =====
+async function deleteArticle(id) {
+    if (!confirm('Delete this article?')) return;
+    // Save state for undo
+    const articles = await api('/api/articles?limit=50');
+    const article = articles.find(a => a.id === id);
+    if (!article) return;
+    await api('/api/articles/' + id, { method: 'DELETE' });
+    loadArticles();
+    toast('Article deleted', async () => {
+        await api('/api/articles', { method: 'POST', body: { title: article.title, excerpt: article.excerpt, content: article.content, image_url: article.image_url, category_id: article.category_id, author: article.author, is_featured: article.is_featured, is_trending: article.is_trending, status: 'published' } });
+        loadArticles();
+    });
+}
+
+async function deleteCategory(id) {
+    if (!confirm('Delete this category?')) return;
+    const cats = await api('/api/categories');
+    const cat = cats.find(c => c.id === id);
+    if (!cat) return;
+    await api('/api/categories/' + id, { method: 'DELETE' });
+    loadCategories();
+    toast('Category deleted', async () => {
+        await api('/api/categories', { method: 'POST', body: { name: cat.name, color: cat.color } });
+        loadCategories();
+    });
+}
+
+async function deleteReview(id) {
+    if (!confirm('Delete this review?')) return;
+    const reviews = await api('/api/reviews');
+    const review = reviews.find(r => r.id === id);
+    if (!review) return;
+    await api('/api/reviews/' + id, { method: 'DELETE' });
+    loadReviews();
+    toast('Review deleted', async () => {
+        await api('/api/reviews', { method: 'POST', body: { title: review.title, excerpt: review.excerpt, content: review.content, image_url: review.image_url, rating: review.rating } });
+        loadReviews();
+    });
+}
+
+async function deletePhoto(id) {
+    if (!confirm('Delete?')) return;
+    const photos = await api('/api/photos');
+    const photo = photos.find(p => p.id === id);
+    if (!photo) return;
+    await api('/api/photos/' + id, { method: 'DELETE' });
+    loadPhotos();
+    toast('Deleted', async () => {
+        await api('/api/photos', { method: 'POST', body: { title: photo.title, image_url: photo.image_url, gallery_name: photo.gallery_name, photo_count: photo.photo_count } });
+        loadPhotos();
+    });
+}
+
+async function deleteBreaking(id) {
+    if (!confirm('Delete?')) return;
+    const items = await api('/api/breaking');
+    const item = items.find(b => b.id === id);
+    if (!item) return;
+    await api('/api/breaking/' + id, { method: 'DELETE' });
+    loadBreaking();
+    toast('Deleted', async () => {
+        await api('/api/breaking', { method: 'POST', body: { text: item.text, link: item.link } });
+        loadBreaking();
+    });
+}
+
+async function deleteUser(id) {
+    if (!confirm('Delete this user?')) return;
+    const users = await api('/api/users');
+    const user = users.find(u => u.id === id);
+    if (!user) return;
+    const res = await api('/api/users/' + id, { method: 'DELETE' });
+    if (res.error) return alert(res.error);
+    loadUsers();
+    toast('User deleted', async () => {
+        await api('/api/users', { method: 'POST', body: { username: user.username, email: user.email, password: 'temp1234', role: user.role } });
+        loadUsers();
+    });
+}
+
+// ===== AUTH =====
+async function doLogin() {
+    const user = document.getElementById('loginUser').value;
+    const pass = document.getElementById('loginPass').value;
+    const res = await api('/api/auth/login', { method: 'POST', body: { username: user, password: pass } });
+    if (res.success) {
+        document.getElementById('loginPage').classList.add('hidden');
+        document.getElementById('adminLayout').classList.remove('hidden');
+        loadDashboard();
+        // Hide admin-only sections for editors
+        if (res.user && res.user.role !== 'admin') {
+            document.getElementById('nav-users').style.display = 'none';
+            document.getElementById('nav-ads').style.display = 'none';
+        }
+    } else {
+        document.getElementById('loginError').style.display = 'block';
+    }
+}
+
+async function doLogout() {
+    await api('/api/auth/logout', { method: 'POST' });
+    document.getElementById('loginPage').classList.remove('hidden');
+    document.getElementById('adminLayout').classList.add('hidden');
+}
+
+async function checkAuth() {
+    const res = await api('/api/auth/me');
+    if (res.user) {
+        document.getElementById('loginPage').classList.add('hidden');
+        document.getElementById('adminLayout').classList.remove('hidden');
+        loadDashboard();
+        // Hide admin-only sections for editors
+        if (res.user.role !== 'admin') {
+            document.getElementById('nav-users').style.display = 'none';
+            document.getElementById('nav-ads').style.display = 'none';
+        }
+    }
+}
+
+// ===== NAVIGATION =====
+function showSection(name) {
+    document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('hidden'));
+    document.getElementById('section-' + name).classList.remove('hidden');
+    document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+    document.getElementById('nav-' + name).classList.add('active');
+    const titles = { dashboard: 'Dashboard', articles: 'Articles', categories: 'Categories', reviews: 'Movie Reviews', photos: 'Photo Galleries', breaking: 'Breaking News', ads: 'Ad Management', users: 'Team Users', subscribers: 'Subscribers' };
+    document.getElementById('pageTitle').textContent = titles[name] || name;
+
+    if (name === 'dashboard') loadDashboard();
+    else if (name === 'articles') loadArticles();
+    else if (name === 'categories') loadCategories();
+    else if (name === 'reviews') loadReviews();
+    else if (name === 'photos') loadPhotos();
+    else if (name === 'breaking') loadBreaking();
+    else if (name === 'ads') loadAds();
+    else if (name === 'users') loadUsers();
+    else if (name === 'subscribers') loadSubscribers();
+}
+
+// ===== DASHBOARD =====
+let visitsChart = null;
+let deviceChart = null;
+let hourlyChart = null;
+let subGrowthChart = null;
+let subCumulChart = null;
+let onlineRefreshInterval = null;
+
+async function loadDashboard() {
+    const me = await api('/api/auth/me');
+    if (me.user) {
+        document.getElementById('currentUser').textContent = 'Logged in as: ' + me.user.username;
+    }
+
+    // Load article count
+    const stats = await api('/api/stats');
+    document.getElementById('statArticles').textContent = stats.articles;
+
+    // Load visitor stats
+    try {
+        const vStats = await api('/api/stats/visitors');
+        document.getElementById('statOnline').textContent = vStats.onlineUsers;
+        document.getElementById('statTotalVisits').textContent = vStats.totalVisits.toLocaleString();
+        document.getElementById('statUniqueVisitors').textContent = vStats.uniqueVisitors.toLocaleString();
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#ccc' : '#666';
+        const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+
+        // Visits over time (line chart)
+        const dayLabels = vStats.visitsByDay.map(d => d.date);
+        const dayData = vStats.visitsByDay.map(d => d.count);
+        if (visitsChart) visitsChart.destroy();
+        visitsChart = new Chart(document.getElementById('chartVisits'), {
+            type: 'line',
+            data: {
+                labels: dayLabels,
+                datasets: [{
+                    label: 'Visits',
+                    data: dayData,
+                    borderColor: '#2980b9',
+                    backgroundColor: 'rgba(41, 128, 185, 0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#2980b9'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                    y: { beginAtZero: true, ticks: { color: textColor, stepSize: 1 }, grid: { color: gridColor } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Device doughnut
+        const devLabels = vStats.byDevice.map(d => d.device);
+        const devData = vStats.byDevice.map(d => d.count);
+        if (deviceChart) deviceChart.destroy();
+        deviceChart = new Chart(document.getElementById('chartDevice'), {
+            type: 'doughnut',
+            data: {
+                labels: devLabels,
+                datasets: [{ data: devData, backgroundColor: ['#2980b9', '#e67e22'], borderWidth: 2, borderColor: isDark ? '#141825' : '#fff' }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor, padding: 12 } } } }
+        });
+
+        // Hourly visits (bar chart)
+        const hourLabels = vStats.visitsByHour.map(h => h.hour + ':00');
+        const hourData = vStats.visitsByHour.map(h => h.count);
+        if (hourlyChart) hourlyChart.destroy();
+        hourlyChart = new Chart(document.getElementById('chartHourly'), {
+            type: 'bar',
+            data: {
+                labels: hourLabels,
+                datasets: [{ label: 'Visits', data: hourData, backgroundColor: 'rgba(142, 68, 173, 0.7)', borderRadius: 4 }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { ticks: { color: textColor, maxRotation: 45 }, grid: { color: gridColor } },
+                    y: { beginAtZero: true, ticks: { color: textColor, stepSize: 1 }, grid: { color: gridColor } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Top pages
+        const topPages = document.getElementById('topPagesList');
+        if (vStats.topPages.length === 0) {
+            topPages.innerHTML = '<div style="text-align:center;color:#888;padding:20px">No visits recorded yet</div>';
+        } else {
+            topPages.innerHTML = vStats.topPages.map((p, i) => `
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+                    <span style="background:var(--primary);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${i+1}</span>
+                    <div style="flex:1">
+                        <div style="font-weight:600;font-size:14px">${p.page}</div>
+                    </div>
+                    <span style="background:rgba(41,128,185,0.1);color:#2980b9;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600">${p.count} visits</span>
+                </div>
+            `).join('');
+        }
+    } catch(e) { console.log('Visitor stats error:', e); }
+
+    // Load subscriber growth charts
+    try {
+        const subGrowth = await api('/api/subscribers/growth');
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#ccc' : '#666';
+        const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+
+        // Daily signups bar chart
+        const gLabels = subGrowth.growth.map(d => d.date);
+        const gData = subGrowth.growth.map(d => d.count);
+        if (subGrowthChart) subGrowthChart.destroy();
+        subGrowthChart = new Chart(document.getElementById('chartSubscriberGrowth'), {
+            type: 'bar',
+            data: {
+                labels: gLabels,
+                datasets: [{ label: 'New Subscribers', data: gData, backgroundColor: 'rgba(39, 174, 96, 0.7)', borderRadius: 4 }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { ticks: { color: textColor, maxRotation: 45 }, grid: { color: gridColor } },
+                    y: { beginAtZero: true, ticks: { color: textColor, stepSize: 1 }, grid: { color: gridColor } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Cumulative line chart
+        const cLabels = subGrowth.cumulative.map(d => d.date);
+        const cData = subGrowth.cumulative.map(d => d.total);
+        if (subCumulChart) subCumulChart.destroy();
+        subCumulChart = new Chart(document.getElementById('chartSubscriberCumulative'), {
+            type: 'line',
+            data: {
+                labels: cLabels,
+                datasets: [{
+                    label: 'Total Subscribers',
+                    data: cData,
+                    borderColor: '#8e44ad',
+                    backgroundColor: 'rgba(142, 68, 173, 0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#8e44ad'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                    y: { beginAtZero: true, ticks: { color: textColor, stepSize: 1 }, grid: { color: gridColor } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    } catch(e) { console.log('Subscriber chart error:', e); }
+
+    // Load recent articles
+    const articles = await api('/api/articles?limit=5');
+    const tbody = document.getElementById('recentArticles');
+    tbody.innerHTML = articles.map(a => `<tr>
+        <td>${a.title.substring(0, 50)}...</td>
+        <td><span class="badge badge-blue">${a.category_name || 'None'}</span></td>
+        <td>${new Date(a.created_at).toLocaleDateString()}</td>
+    </tr>`).join('');
+
+    // Auto-refresh online count every 10 seconds
+    if (onlineRefreshInterval) clearInterval(onlineRefreshInterval);
+    onlineRefreshInterval = setInterval(async () => {
+        try {
+            const o = await api('/api/stats/online');
+            document.getElementById('statOnline').textContent = o.online;
+        } catch(e) {}
+    }, 10000);
+}
+
+// ===== ARTICLES =====
+async function loadArticles() {
+    const articles = await api('/api/articles?limit=50');
+    const tbody = document.getElementById('articlesTable');
+    tbody.innerHTML = articles.map(a => `<tr>
+        <td>${a.title.substring(0, 60)}</td>
+        <td><span class="badge badge-blue">${a.category_name || 'None'}</span></td>
+        <td><span class="badge badge-green">Published</span></td>
+        <td>
+            <button class="btn btn-primary btn-sm" onclick="openArticleModal(${a.id})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteArticle(${a.id})">Delete</button>
+        </td>
+    </tr>`).join('');
+}
+
+async function openArticleModal(id) {
+    let article = { title: '', excerpt: '', content: '', image_url: '', category_id: '', author: 'Staff', is_featured: 0, is_trending: 0 };
+    if (id) {
+        const articles = await api('/api/articles?limit=50');
+        article = articles.find(a => a.id === id) || article;
+    }
+    await loadCategoriesSelect();
+    if (article.category_id) document.getElementById('artCategory').value = article.category_id;
+    document.getElementById('modalContent').innerHTML = `
+        <h3>${id ? 'Edit' : 'New'} Article</h3>
+        <div class="form-group"><label>Title</label><input type="text" id="artTitle" value="${article.title}"></div>
+        <div class="form-row">
+            <div class="form-group"><label>Category</label><select id="artCategory"></select></div>
+            <div class="form-group"><label>Author</label><input type="text" id="artAuthor" value="${article.author || 'Staff'}"></div>
+        </div>
+        <div class="form-group"><label>Image URL</label><input type="text" id="artImage" value="${article.image_url || ''}" placeholder="https://..."></div>
+        <div class="form-group"><label>Excerpt</label><input type="text" id="artExcerpt" value="${article.excerpt || ''}"></div>
+        <div class="form-group"><label>Content (HTML)</label><textarea id="artContent">${article.content || ''}</textarea></div>
+        <div class="form-row">
+            <div class="form-check"><input type="checkbox" id="artFeatured" ${article.is_featured ? 'checked' : ''}> <label for="artFeatured">Featured</label></div>
+            <div class="form-check"><input type="checkbox" id="artTrending" ${article.is_trending ? 'checked' : ''}> <label for="artTrending">Trending</label></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveArticle(${id || 'null'})">Save</button>
+        </div>`;
+    await loadCategoriesSelect();
+    if (article.category_id) document.getElementById('artCategory').value = article.category_id;
+    document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+async function loadCategoriesSelect() {
+    const cats = await api('/api/categories');
+    const sel = document.getElementById('artCategory');
+    sel.innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+async function saveArticle(id) {
+    const data = {
+        title: document.getElementById('artTitle').value,
+        excerpt: document.getElementById('artExcerpt').value,
+        content: document.getElementById('artContent').value,
+        image_url: document.getElementById('artImage').value,
+        category_id: parseInt(document.getElementById('artCategory').value),
+        author: document.getElementById('artAuthor').value,
+        is_featured: document.getElementById('artFeatured').checked,
+        is_trending: document.getElementById('artTrending').checked,
+        status: 'published'
+    };
+    if (id) await api('/api/articles/' + id, { method: 'PUT', body: data });
+    else await api('/api/articles', { method: 'POST', body: data });
+    closeModal();
+    loadArticles();
+    toast('Article saved!');
+}
+
+// ===== CATEGORIES =====
+async function loadCategories() {
+    const cats = await api('/api/categories');
+    const tbody = document.getElementById('categoriesTable');
+    tbody.innerHTML = cats.map(c => `<tr>
+        <td>${c.name}</td>
+        <td>${c.slug}</td>
+        <td><span style="display:inline-block;width:24px;height:24px;border-radius:4px;background:${c.color};vertical-align:middle"></span> ${c.color}</td>
+        <td><button class="btn btn-primary btn-sm" onclick="openCategoryModal(${c.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteCategory(${c.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function openCategoryModal(id) {
+    let cat = { name: '', color: '#c0392b' };
+    if (id) {
+        const cats = await api('/api/categories');
+        cat = cats.find(c => c.id === id) || cat;
+    }
+    document.getElementById('modalContent').innerHTML = `
+        <h3>${id ? 'Edit' : 'New'} Category</h3>
+        <div class="form-group"><label>Name</label><input type="text" id="catName" value="${cat.name}"></div>
+        <div class="form-group"><label>Color</label><input type="color" id="catColor" value="${cat.color}"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveCategory(${id || 'null'})">Save</button>
+        </div>`;
+    document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+async function saveCategory(id) {
+    if (id) await api('/api/categories/' + id, { method: 'PUT', body: { name: document.getElementById('catName').value, color: document.getElementById('catColor').value } });
+    else await api('/api/categories', { method: 'POST', body: { name: document.getElementById('catName').value, color: document.getElementById('catColor').value } });
+    closeModal();
+    loadCategories();
+    toast(id ? 'Category updated!' : 'Category created!');
+}
+
+// ===== REVIEWS =====
+async function loadReviews() {
+    const reviews = await api('/api/reviews');
+    const tbody = document.getElementById('reviewsTable');
+    tbody.innerHTML = reviews.map(r => `<tr>
+        <td>${r.title}</td>
+        <td>⭐ ${r.rating}/5</td>
+        <td><button class="btn btn-primary btn-sm" onclick="openReviewModal(${r.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteReview(${r.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function openReviewModal(id) {
+    let review = { title: '', rating: 4, image_url: '', excerpt: '', content: '' };
+    if (id) {
+        const reviews = await api('/api/reviews');
+        review = reviews.find(r => r.id === id) || review;
+    }
+    document.getElementById('modalContent').innerHTML = `
+        <h3>${id ? 'Edit' : 'New'} Review</h3>
+        <div class="form-group"><label>Movie Title</label><input type="text" id="revTitle" value="${review.title}"></div>
+        <div class="form-row">
+            <div class="form-group"><label>Rating (0-5)</label><input type="number" id="revRating" min="0" max="5" step="0.5" value="${review.rating}"></div>
+            <div class="form-group"><label>Image URL</label><input type="text" id="revImage" value="${review.image_url || ''}"></div>
+        </div>
+        <div class="form-group"><label>Short Excerpt</label><input type="text" id="revExcerpt" value="${review.excerpt || ''}"></div>
+        <div class="form-group"><label>Review Content (HTML)</label><textarea id="revContent">${review.content || ''}</textarea></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveReview(${id || 'null'})">Save</button>
+        </div>`;
+    document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+async function saveReview(id) {
+    const data = {
+        title: document.getElementById('revTitle').value,
+        excerpt: document.getElementById('revExcerpt').value,
+        content: document.getElementById('revContent').value,
+        image_url: document.getElementById('revImage').value,
+        rating: parseFloat(document.getElementById('revRating').value)
+    };
+    if (id) await api('/api/reviews/' + id, { method: 'PUT', body: data });
+    else await api('/api/reviews', { method: 'POST', body: data });
+    closeModal();
+    loadReviews();
+    toast(id ? 'Review updated!' : 'Review created!');
+}
+
+// ===== PHOTOS =====
+async function loadPhotos() {
+    const photos = await api('/api/photos');
+    const tbody = document.getElementById('photosTable');
+    tbody.innerHTML = photos.map(p => `<tr>
+        <td>${p.title}</td>
+        <td>${p.gallery_name}</td>
+        <td>${p.photo_count}</td>
+        <td><button class="btn btn-primary btn-sm" onclick="openPhotoModal(${p.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="deletePhoto(${p.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function openPhotoModal(id) {
+    let photo = { title: '', gallery_name: '', photo_count: 1, image_url: '' };
+    if (id) {
+        const photos = await api('/api/photos');
+        photo = photos.find(p => p.id === id) || photo;
+    }
+    document.getElementById('modalContent').innerHTML = `
+        <h3>${id ? 'Edit' : 'New'} Photo Gallery</h3>
+        <div class="form-group"><label>Title</label><input type="text" id="photoTitle" value="${photo.title}"></div>
+        <div class="form-row">
+            <div class="form-group"><label>Gallery Name</label><input type="text" id="photoGallery" value="${photo.gallery_name || ''}"></div>
+            <div class="form-group"><label>Photo Count</label><input type="number" id="photoCount" value="${photo.photo_count}"></div>
+        </div>
+        <div class="form-group"><label>Image URL</label><input type="text" id="photoImage" value="${photo.image_url || ''}"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="savePhoto(${id || 'null'})">Save</button>
+        </div>`;
+    document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+async function savePhoto(id) {
+    const data = {
+        title: document.getElementById('photoTitle').value,
+        gallery_name: document.getElementById('photoGallery').value,
+        photo_count: parseInt(document.getElementById('photoCount').value),
+        image_url: document.getElementById('photoImage').value
+    };
+    if (id) await api('/api/photos/' + id, { method: 'PUT', body: data });
+    else await api('/api/photos', { method: 'POST', body: data });
+    closeModal();
+    loadPhotos();
+    toast(id ? 'Gallery updated!' : 'Gallery created!');
+}
+
+// ===== BREAKING NEWS =====
+async function loadBreaking() {
+    const items = await api('/api/breaking');
+    const tbody = document.getElementById('breakingTable');
+    tbody.innerHTML = items.map(b => `<tr>
+        <td>${b.text}</td>
+        <td>${b.link}</td>
+        <td><span class="badge badge-green">Active</span></td>
+        <td><button class="btn btn-primary btn-sm" onclick="openBreakingModal(${b.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteBreaking(${b.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function openBreakingModal(id) {
+    let item = { text: '', link: '#' };
+    if (id) {
+        const items = await api('/api/breaking');
+        item = items.find(b => b.id === id) || item;
+    }
+    document.getElementById('modalContent').innerHTML = `
+        <h3>${id ? 'Edit' : 'Add'} Breaking News</h3>
+        <div class="form-group"><label>Headline</label><input type="text" id="breakText" value="${item.text}"></div>
+        <div class="form-group"><label>Link (optional)</label><input type="text" id="breakLink" value="${item.link || '#'}" placeholder="#"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveBreaking(${id || 'null'})">Save</button>
+        </div>`;
+    document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+async function saveBreaking(id) {
+    const data = {
+        text: document.getElementById('breakText').value,
+        link: document.getElementById('breakLink').value || '#'
+    };
+    if (id) await api('/api/breaking/' + id, { method: 'PUT', body: data });
+    else await api('/api/breaking', { method: 'POST', body: data });
+    closeModal();
+    loadBreaking();
+    toast(id ? 'Breaking news updated!' : 'Breaking news added!');
+}
+
+// ===== ADS =====
+async function loadAds() {
+    const ads = await api('/api/ads/all');
+    const container = document.getElementById('adsContainer');
+    container.innerHTML = ads.map(a => `
+        <div style="margin-bottom:20px;padding:16px;border:1px solid var(--border);border-radius:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <div>
+                    <strong>${a.title}</strong>
+                    <span class="badge badge-blue" style="margin-left:8px">${a.position}</span>
+                    <span class="badge badge-green">${a.size}</span>
+                </div>
+                <label class="form-check"><input type="checkbox" ${a.is_active ? 'checked' : ''} onchange="toggleAd(${a.id}, this.checked)"> Active</label>
+            </div>
+            <div class="form-group"><label>AdSense Code</label><textarea style="min-height:80px;font-family:monospace;font-size:12px" id="adCode_${a.id}">${a.ad_code}</textarea></div>
+            <button class="btn btn-primary btn-sm" onclick="saveAd(${a.id})">Save Changes</button>
+        </div>
+    `).join('');
+}
+
+// ===== USERS =====
+let currentUserRole = 'editor';
+let currentUserId = null;
+
+async function loadUsers() {
+    // Get current user info
+    const me = await api('/api/auth/me');
+    if (me.user) {
+        currentUserRole = me.user.role;
+        currentUserId = me.user.id;
+    }
+    const masterAdmin = (await api('/api/users')).find(u => u.role === 'admin' && u.username === 'admin');
+    const masterAdminId = masterAdmin ? masterAdmin.id : null;
+
+    const users = await api('/api/users');
+    const tbody = document.getElementById('usersTable');
+    tbody.innerHTML = users.map(u => {
+        const isTargetMasterAdmin = u.id === masterAdminId;
+        const isTargetAdmin = u.role === 'admin';
+        const isSelf = u.id === currentUserId;
+        const isEditor = currentUserRole !== 'admin';
+
+        // Editors cannot delete or edit admin users
+        const canEdit = !isEditor || !isTargetAdmin;
+        const canDelete = !isEditor && !isTargetMasterAdmin;
+
+        let actions = '';
+        if (canEdit) actions += `<button class="btn btn-primary btn-sm" onclick="openUserModal(${u.id})">Edit</button> `;
+        if (canDelete) actions += `<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Delete</button>`;
+        if (!canEdit && !canDelete) actions = '<span style="color:#999;font-size:12px">Protected</span>';
+        if (isSelf && isTargetMasterAdmin) actions = '<span style="color:#999;font-size:12px">Master Admin</span>';
+
+        return `<tr>
+            <td>${u.username} ${isSelf ? '<span style="color:#888;font-size:11px">(you)</span>' : ''}</td>
+            <td>${u.email || '-'}</td>
+            <td><span class="badge ${isTargetAdmin ? 'badge-red' : 'badge-blue'}">${u.role}</span></td>
+            <td>${new Date(u.created_at).toLocaleDateString()}</td>
+            <td>${actions}</td>
+        </tr>`;
+    }).join('');
+}
+
+async function openUserModal(id) {
+    let user = { username: '', email: '', role: 'editor' };
+    if (id) {
+        const users = await api('/api/users');
+        user = users.find(u => u.id === id) || user;
+    }
+    document.getElementById('modalContent').innerHTML = `
+        <h3>${id ? 'Edit' : 'Add New'} Team User</h3>
+        <div class="form-group"><label>Username</label><input type="text" id="userUsername" value="${user.username}"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="userEmail" value="${user.email || ''}" placeholder="user@yourcompany.com"></div>
+        <div class="form-group"><label>Password ${id ? '(leave blank to keep current)' : ''}</label><input type="password" id="userPassword" placeholder="${id ? 'Leave blank to keep current' : 'Set a password'}"></div>
+        <div class="form-group"><label>Role</label>
+            <select id="userRole">
+                <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>Editor (can write & edit articles)</option>
+                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin (full access)</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveUser(${id || 'null'})">${id ? 'Update' : 'Create User'}</button>
+        </div>`;
+    document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+async function saveUser(id) {
+    const data = {
+        username: document.getElementById('userUsername').value,
+        email: document.getElementById('userEmail').value,
+        password: document.getElementById('userPassword').value,
+        role: document.getElementById('userRole').value
+    };
+    if (!data.username) return alert('Username is required');
+    if (!id && !data.password) return alert('Password is required for new users');
+
+    if (id) await api('/api/users/' + id, { method: 'PUT', body: data });
+    else await api('/api/users', { method: 'POST', body: data });
+    closeModal();
+    loadUsers();
+    toast(id ? 'User updated!' : 'User created!');
+}
+
+
+
+async function saveAd(id) {
+    const code = document.getElementById('adCode_' + id).value;
+    await api('/api/ads/' + id, { method: 'PUT', body: { ad_code: code, title: '', position: '', size: '', is_active: 1 } });
+    toast('Ad updated!');
+}
+
+// ===== CHANGE PASSWORD =====
+function openChangePasswordModal() {
+    document.getElementById('modalContent').innerHTML = `
+        <h3>Change Your Password</h3>
+        <div class="form-group"><label>Current Password</label><input type="password" id="currentPass"></div>
+        <div class="form-group"><label>New Password</label><input type="password" id="newPass"></div>
+        <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmPass"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+        </div>`;
+    document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+async function changePassword() {
+    const current = document.getElementById('currentPass').value;
+    const newPass = document.getElementById('newPass').value;
+    const confirm = document.getElementById('confirmPass').value;
+    if (!current || !newPass) return alert('Please fill in all fields');
+    if (newPass !== confirm) return alert('New passwords do not match');
+    if (newPass.length < 4) return alert('Password must be at least 4 characters');
+
+    const res = await api('/api/auth/change-password', { method: 'POST', body: { currentPassword: current, newPassword: newPass } });
+    if (res.success) {
+        closeModal();
+        toast('Password changed successfully!');
+    } else {
+        alert(res.error || 'Failed to change password');
+    }
+}
+
+// ===== FORGOT PASSWORD =====
+let resetToken = null;
+let resetUserId = null;
+
+function openForgotPasswordModal() {
+    document.getElementById('modalContent').innerHTML = `
+        <h3>Reset Password</h3>
+        <p style="color:#666;font-size:14px;margin-bottom:16px">Enter the email address associated with your account.</p>
+        <div class="form-group"><label>Email Address</label><input type="email" id="resetEmail" placeholder="user@yourcompany.com"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="sendResetLink()">Send Reset Link</button>
+        </div>`;
+    document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+async function sendResetLink() {
+    const email = document.getElementById('resetEmail').value;
+    if (!email) return alert('Please enter your email');
+
+    const res = await api('/api/auth/forgot-password', { method: 'POST', body: { email } });
+    if (res.success) {
+        resetToken = res.username; // We reuse this to show username
+        document.getElementById('modalContent').innerHTML = `
+            <h3>Check Your Email</h3>
+            <p style="color:#666;font-size:14px;margin-bottom:16px">We found your account! Since this is a local server, here are your details:</p>
+            <div style="background:#f8f9fa;padding:14px;border-radius:8px;margin-bottom:16px">
+                <p style="margin-bottom:4px"><strong>Username:</strong> ${res.username}</p>
+                <p style="margin-bottom:0;font-size:13px;color:#888">Enter a new password below to regain access.</p>
+            </div>
+            <div class="form-group"><label>New Password</label><input type="password" id="resetNewPass" placeholder="Enter new password"></div>
+            <div class="form-group"><label>Confirm Password</label><input type="password" id="resetConfirmPass" placeholder="Confirm new password"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="resetPassword()">Reset Password</button>
+            </div>`;
+        // Store the userId for the reset
+        const user = await api('/api/users');
+        const found = user.find(u => u.username === res.username);
+        resetUserId = found ? found.id : null;
+    } else {
+        alert(res.error || 'No account found with this email');
+    }
+}
+
+async function resetPassword() {
+    const newPass = document.getElementById('resetNewPass').value;
+    const confirm = document.getElementById('resetConfirmPass').value;
+    if (!newPass) return alert('Please enter a new password');
+    if (newPass !== confirm) return alert('Passwords do not match');
+    if (newPass.length < 4) return alert('Password must be at least 4 characters');
+    if (!resetUserId) return alert('Reset session expired. Please try again.');
+
+    // For local usage, we allow direct reset via admin endpoint
+    const res = await api('/api/users/' + resetUserId, { method: 'PUT', body: {
+        username: resetToken,
+        password: newPass,
+        email: '',
+        role: 'admin'
+    }});
+    if (res.success) {
+        closeModal();
+        toast('Password reset successfully! You can now log in.');
+    } else {
+        alert(res.error || 'Failed to reset password');
+    }
+}
+
+// ===== SUBSCRIBERS =====
+async function loadSubscribers() {
+    const subscribers = await api('/api/subscribers');
+    const tbody = document.getElementById('subscribersTable');
+    const active = subscribers.filter(s => s.is_active).length;
+    document.getElementById('statSubscribers').textContent = active;
+
+    if (subscribers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:20px">No subscribers yet</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = subscribers.map(s => `<tr>
+        <td>${s.email}</td>
+        <td>${s.name || '-'}</td>
+        <td><span class="badge ${s.is_active ? 'badge-green' : 'badge-red'}">${s.is_active ? 'Active' : 'Inactive'}</span></td>
+        <td>${new Date(s.created_at).toLocaleDateString()}</td>
+        <td>
+            <button class="btn btn-sm ${s.is_active ? 'btn-secondary' : 'btn-success'}" onclick="toggleSubscriber(${s.id}, ${s.is_active ? 0 : 1})">${s.is_active ? 'Pause' : 'Resume'}</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteSubscriber(${s.id})">Delete</button>
+        </td>
+    </tr>`).join('');
+
+    // Load email update history
+    const updates = await api('/api/email-updates');
+    document.getElementById('statEmailUpdates').textContent = updates.length;
+    const pastDiv = document.getElementById('pastUpdates');
+    if (updates.length === 0) {
+        pastDiv.innerHTML = '<div style="text-align:center;color:#888;font-size:13px">No updates sent yet</div>';
+    } else {
+        pastDiv.innerHTML = updates.slice(0, 5).map(u => `
+            <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+                <strong>${u.subject}</strong>
+                <div style="color:var(--text-muted);margin-top:2px">Sent to ${u.sent_count} subscribers · ${new Date(u.sent_at).toLocaleDateString()}</div>
+            </div>
+        `).join('');
+    }
+
+    // Load SMTP settings
+    loadSmtpSettings();
+}
+
+async function addManualSubscriber() {
+    const email = document.getElementById('manualSubEmail').value.trim();
+    const name = document.getElementById('manualSubName').value.trim();
+    if (!email) return;
+
+    const resultDiv = document.getElementById('manualSubResult');
+    try {
+        const res = await api('/api/subscribe', { method: 'POST', body: { email, name } });
+        if (res.success) {
+            resultDiv.innerHTML = '<span style="color:#27ae60;font-size:13px">✅ ' + res.message + '</span>';
+            document.getElementById('manualSubEmail').value = '';
+            document.getElementById('manualSubName').value = '';
+            loadSubscribers();
+        } else {
+            resultDiv.innerHTML = '<span style="color:#e74c3c;font-size:13px">❌ ' + (res.error || 'Failed') + '</span>';
+        }
+    } catch(e) {
+        resultDiv.innerHTML = '<span style="color:#e74c3c;font-size:13px">❌ Error adding subscriber</span>';
+    }
+    setTimeout(() => resultDiv.innerHTML = '', 4000);
+}
+
+async function toggleSubscriber(id, active) {
+    await api('/api/subscribers/' + id, { method: 'PUT', body: { is_active: active } });
+    loadSubscribers();
+    toast(active ? 'Subscriber resumed' : 'Subscriber paused');
+}
+
+async function deleteSubscriber(id) {
+    if (!confirm('Delete this subscriber?')) return;
+    await api('/api/subscribers/' + id, { method: 'DELETE' });
+    loadSubscribers();
+    toast('Subscriber deleted');
+}
+
+// ===== SMTP SETTINGS =====
+async function loadSmtpSettings() {
+    try {
+        const settings = await api('/api/smtp/settings');
+        if (settings.smtp_host) document.getElementById('smtpHost').value = settings.smtp_host;
+        if (settings.smtp_port) document.getElementById('smtpPort').value = settings.smtp_port;
+        if (settings.smtp_user) document.getElementById('smtpUser').value = settings.smtp_user;
+        if (settings.smtp_pass) document.getElementById('smtpPass').value = settings.smtp_pass;
+        if (settings.smtp_from) document.getElementById('smtpFrom').value = settings.smtp_from;
+        if (settings.smtp_secure) document.getElementById('smtpSecure').checked = settings.smtp_secure === '1';
+    } catch(e) {}
+}
+
+async function saveSmtpSettings() {
+    const data = {
+        smtp_host: document.getElementById('smtpHost').value.trim(),
+        smtp_port: document.getElementById('smtpPort').value.trim(),
+        smtp_user: document.getElementById('smtpUser').value.trim(),
+        smtp_pass: document.getElementById('smtpPass').value,
+        smtp_from: document.getElementById('smtpFrom').value.trim(),
+        smtp_secure: document.getElementById('smtpSecure').checked
+    };
+    if (!data.smtp_host || !data.smtp_user) return alert('SMTP host and email address are required');
+    const res = await api('/api/smtp/settings', { method: 'PUT', body: data });
+    const resultDiv = document.getElementById('smtpResult');
+    if (res.success) {
+        resultDiv.innerHTML = '<span style="color:#27ae60;font-size:14px">✅ ' + res.message + '</span>';
+    } else {
+        resultDiv.innerHTML = '<span style="color:#e74c3c;font-size:14px">❌ ' + res.error + '</span>';
+    }
+    setTimeout(() => resultDiv.innerHTML = '', 4000);
+}
+
+async function testSmtpConnection() {
+    const resultDiv = document.getElementById('smtpResult');
+    resultDiv.innerHTML = '<span style="color:#888;font-size:14px">⏳ Testing connection...</span>';
+    // Save first, then test
+    await saveSmtpSettings();
+    const res = await api('/api/smtp/test', { method: 'POST' });
+    if (res.success) {
+        resultDiv.innerHTML = '<span style="color:#27ae60;font-size:14px">✅ ' + res.message + '</span>';
+    } else {
+        resultDiv.innerHTML = '<span style="color:#e74c3c;font-size:14px">❌ ' + res.error + '</span>';
+    }
+}
+
+async function sendEmailUpdate() {
+    const subject = document.getElementById('updateSubject').value.trim();
+    const body = document.getElementById('updateBody').value.trim();
+    if (!subject || !body) return alert('Please fill in both subject and content');
+
+    const res = await api('/api/subscribers/send-update', { method: 'POST', body: { subject, body } });
+    const resultDiv = document.getElementById('sendResult');
+    if (res.success) {
+        resultDiv.innerHTML = `<div style="background:#27ae60;color:#fff;padding:12px;border-radius:8px;font-size:14px">✅ ${res.message}</div>`;
+        document.getElementById('updateSubject').value = '';
+        document.getElementById('updateBody').value = '';
+        loadSubscribers();
+    } else {
+        resultDiv.innerHTML = `<div style="background:#e74c3c;color:#fff;padding:12px;border-radius:8px;font-size:14px">❌ ${res.error}</div>`;
+    }
+    setTimeout(() => resultDiv.innerHTML = '', 5000);
+}
+
+// ===== MODAL =====
+function closeModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('modalOverlay').classList.add('hidden');
+}
+
+// ===== INIT =====
+checkAuth();
+document.getElementById('loginPass').addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>

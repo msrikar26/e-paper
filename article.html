@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article - NewsPulse</title>
+    <link rel="stylesheet" href="/css/style.css?v=6">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+    <style>
+        .article-page { max-width: 800px; margin: 0 auto; padding: 30px 16px; }
+        .article-page .category-tag { margin-bottom: 16px; display: inline-block; }
+        .article-page h1 { font-family: 'Merriweather', serif; font-size: 32px; line-height: 1.3; margin-bottom: 16px; color: var(--text); }
+        .article-meta { display: flex; gap: 16px; font-size: 14px; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .article-hero { width: 100%; height: 400px; border-radius: 8px; overflow: hidden; margin-bottom: 24px; }
+        .article-hero img { width: 100%; height: 100%; object-fit: cover; }
+        .article-content { font-size: 17px; line-height: 1.8; color: var(--text); }
+        .article-content p { margin-bottom: 16px; }
+        .article-content ul, .article-content ol { margin: 16px 0; padding-left: 24px; }
+        .article-content li { margin-bottom: 8px; }
+        .share-bar { display: flex; gap: 10px; margin: 24px 0; padding: 16px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .share-btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #fff; border: none; cursor: pointer; }
+        .share-btn.facebook { background: #3b5998; }
+        .share-btn.twitter { background: #1da1f2; }
+        .share-btn.whatsapp { background: #25d366; }
+        .share-btn.copy { background: #555; }
+        .related-section { margin-top: 40px; padding-top: 24px; border-top: 3px solid var(--primary); }
+        .related-section h3 { font-family: 'Merriweather', serif; font-size: 20px; margin-bottom: 16px; color: var(--text); }
+        .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+        .related-card a { display: block; background: var(--glass-bg-card); border-radius: 6px; overflow: hidden; box-shadow: var(--shadow); transition: 0.2s; }
+        .related-card a:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+        .related-card .card-image { height: 130px; }
+        .related-card .card-body { padding: 12px; }
+        .related-card h4 { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text); }
+        .related-card time { font-size: 12px; color: var(--text-muted); display: block; margin-top: 4px; }
+        .loading { text-align: center; padding: 60px; color: var(--text-muted); font-size: 18px; }
+
+        /* Comments */
+        .comments-section { margin-top: 40px; padding-top: 24px; border-top: 3px solid var(--primary); }
+        .comments-section h3 { font-family: 'Merriweather', serif; font-size: 20px; margin-bottom: 16px; }
+        .comment-form { margin-bottom: 24px; }
+        .comment-form input, .comment-form textarea { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; margin-bottom: 10px; outline: none; font-family: inherit; background: var(--white); color: var(--text); }
+        .comment-form input:focus, .comment-form textarea:focus { border-color: var(--primary); }
+        .comment-form textarea { min-height: 80px; resize: vertical; }
+        .comment-form button { padding: 10px 24px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .comment-form button:hover { background: var(--primary-dark); }
+        .comment { padding: 16px 0; border-bottom: 1px solid var(--border); }
+        .comment:last-child { border-bottom: none; }
+        .comment-meta { font-size: 13px; color: var(--text-light); margin-bottom: 8px; }
+        .comment-meta strong { color: var(--text); }
+        .comment-body { font-size: 15px; line-height: 1.6; color: var(--text); }
+        .comment-delete { background: none; border: none; color: var(--primary); cursor: pointer; font-size: 12px; margin-left: 8px; }
+        .comments-empty { color: #888; font-style: italic; padding: 20px 0; }
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="container">
+            <span class="date" id="currentDate"></span>
+            <div class="top-bar-links">
+                <a href="/admin/" target="_blank">Admin</a>
+                <a href="#">Contact</a>
+                <a href="#">Advertise</a>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                    <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="/" class="logo">
+                    <h1>News<span>Pulse</span></h1>
+                </a>
+                <div class="header-right">
+                    <div class="header-social">
+                        <a href="https://facebook.com/NewsPulse" target="_blank" rel="noopener" aria-label="Facebook" class="header-social-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+                        <a href="https://x.com/NewsPulse" target="_blank" rel="noopener" aria-label="X / Twitter" class="header-social-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+                        <a href="https://instagram.com/NewsPulse" target="_blank" rel="noopener" aria-label="Instagram" class="header-social-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+                        <a href="https://youtube.com/@NewsPulse" target="_blank" rel="noopener" aria-label="YouTube" class="header-social-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+                    </div>
+                    <div class="header-search">
+                        <input type="text" placeholder="Search news..." id="searchInput" aria-label="Search">
+                        <button aria-label="Search" onclick="doSearch()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="article-page">
+        <button onclick="history.back()" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--glass-bg-card);border:1px solid var(--glass-border);border-radius:var(--radius-pill);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;margin-bottom:20px;box-shadow:var(--shadow-sm)" onmouseover="this.style.transform='translateX(-4px)';this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.transform='';this.style.boxShadow='var(--shadow-sm)'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Back</button>
+        <div id="articleContent">
+        <div class="loading">Loading article...</div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3 class="footer-logo">News<span>Pulse</span></h3>
+                    <p>Your trusted source for breaking news, politics, entertainment, technology, and more. Delivering accurate and timely journalism since 2026.</p>
+                    <div class="social-links">
+                        <a href="https://facebook.com/NewsPulse" target="_blank" rel="noopener" class="social-link-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+                        <a href="https://x.com/NewsPulse" target="_blank" rel="noopener" class="social-link-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+                        <a href="https://instagram.com/NewsPulse" target="_blank" rel="noopener" class="social-link-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+                        <a href="https://youtube.com/@NewsPulse" target="_blank" rel="noopener" class="social-link-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Categories</h4>
+                    <ul id="footerCategories"></ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/admin/" target="_blank">Admin Panel</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Advertise</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Follow Us</h4>
+                    <ul>
+                        <li><a href="https://facebook.com/NewsPulse" target="_blank">Facebook</a></li>
+                        <li><a href="https://x.com/NewsPulse" target="_blank">X / Twitter</a></li>
+                        <li><a href="https://instagram.com/NewsPulse" target="_blank">Instagram</a></li>
+                        <li><a href="https://youtube.com/@NewsPulse" target="_blank">YouTube</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 NewsPulse. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script>
+        // Load categories for footer
+        fetch('/api/categories').then(r=>r.json()).then(cats=>{
+            const el = document.getElementById('footerCategories');
+            if(el) el.innerHTML = cats.map(c => '<li><a href="/?category='+c.slug+'">'+c.name+'</a></li>').join('');
+        });
+    </script>
+
+    <script>
+        const slug = window.location.pathname.split('/article/')[1];
+        if (slug) loadArticle(slug);
+
+        async function loadArticle(slug) {
+            try {
+                const res = await fetch('/api/articles/' + slug);
+                if (!res.ok) throw new Error('Not found');
+                const article = await res.json();
+                document.title = article.title + ' - NewsPulse';
+
+                const relatedHTML = (article.related || []).map(r => `
+                    <div class="related-card">
+                        <a href="/article/${r.slug}">
+                            <div class="card-image"><img src="${r.image_url}" alt="${r.title}" loading="lazy"></div>
+                            <div class="card-body">
+                                <h4>${r.title}</h4>
+                                <time>${timeAgo(r.created_at)}</time>
+                            </div>
+                        </a>
+                    </div>`).join('');
+
+                document.getElementById('articleContent').innerHTML = `
+                    <span class="category-tag" style="background:${article.category_color || '#c0392b'}">${article.category_name || 'News'}</span>
+                    <h1>${article.title}</h1>
+                    <div class="article-meta">
+                        <span>By ${article.author || 'Staff'}</span>
+                        <time>${new Date(article.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+                    </div>
+                    ${article.image_url ? `<div class="article-hero"><img src="${article.image_url}" alt="${article.title}"></div>` : ''}
+                    <div class="article-content">${article.content || article.excerpt}</div>
+                    <div class="share-bar">
+                        <span style="font-weight:600;margin-right:8px">Share:</span>
+                        <button class="share-btn facebook" onclick="share('facebook')">Facebook</button>
+                        <button class="share-btn twitter" onclick="share('twitter')">Twitter</button>
+                        <button class="share-btn whatsapp" onclick="share('whatsapp')">WhatsApp</button>
+                        <button class="share-btn copy" onclick="copyLink()">Copy Link</button>
+                    </div>
+                    ${relatedHTML.length ? `<div class="related-section"><h3>Related Articles</h3><div class="related-grid">${relatedHTML}</div></div>` : ''}
+                    <div class="comments-section" id="commentsSection">
+                        <h3>💬 Comments</h3>
+                        <div class="comment-form">
+                            <input type="text" id="commentName" placeholder="Your name" required>
+                            <textarea id="commentText" placeholder="Write a comment..." required></textarea>
+                            <button onclick="postComment(${article.id})">Post Comment</button>
+                        </div>
+                        <div id="commentsList"><div class="comments-empty">Loading comments...</div></div>
+                    </div>`;
+            } catch (e) {
+                document.getElementById('articleContent').innerHTML = '<div class="loading">Article not found. <a href="/">Go home</a></div>';
+            }
+        }
+
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            if (seconds < 60) return 'just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+            return Math.floor(seconds / 86400) + 'd ago';
+        }
+
+        function share(platform) {
+            const url = encodeURIComponent(window.location.href);
+            const title = encodeURIComponent(document.title);
+            const urls = {
+                facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+                twitter: `https://twitter.com/intent/tweet?url=${url}&text=${title}`,
+                whatsapp: `https://wa.me/?text=${title}%20${url}`
+            };
+            window.open(urls[platform], '_blank', 'width=600,height=400');
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => alert('Link copied!'));
+        }
+
+        // Comments
+        async function loadComments(articleId) {
+            try {
+                const res = await fetch('/api/comments/' + articleId);
+                const comments = await res.json();
+                const list = document.getElementById('commentsList');
+                if (!comments.length) {
+                    list.innerHTML = '<div class="comments-empty">No comments yet. Be the first to comment!</div>';
+                    return;
+                }
+                list.innerHTML = comments.map(c => `
+                    <div class="comment">
+                        <div class="comment-meta"><strong>${c.name}</strong> · ${timeAgo(c.created_at)}</div>
+                        <div class="comment-body">${c.text}</div>
+                    </div>
+                `).join('');
+            } catch(e) {
+                document.getElementById('commentsList').innerHTML = '<div class="comments-empty">Failed to load comments.</div>';
+            }
+        }
+
+        async function postComment(articleId) {
+            const name = document.getElementById('commentName').value.trim();
+            const text = document.getElementById('commentText').value.trim();
+            if (!name || !text) return alert('Please fill in both fields');
+            await fetch('/api/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ article_id: articleId, name, text })
+            });
+            document.getElementById('commentName').value = '';
+            document.getElementById('commentText').value = '';
+            loadComments(articleId);
+        }
+
+        // Load comments after article loads
+        if (slug) {
+            fetch('/api/articles/' + slug).then(r=>r.json()).then(a => {
+                if (a.id) loadComments(a.id);
+            }).catch(()=>{});
+        }
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            });
+        }
+
+        // Current date
+        const dateEl = document.getElementById('currentDate');
+        if (dateEl) {
+            dateEl.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        // Search
+        function doSearch() {
+            const q = document.getElementById('searchInput').value.trim();
+            if (q) window.location.href = '/?search=' + encodeURIComponent(q);
+        }
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') doSearch();
+        });
+    </script>
+</body>
+</html>

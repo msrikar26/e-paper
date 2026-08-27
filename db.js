@@ -295,8 +295,8 @@ if (categoryCount.count === 0) {
     insertSettings();
 
     // Create default admin user
-    const adminUser = process.env.ADMIN_USERNAME || 'admin';
-    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+    const adminUser = process.env.ADMIN_USERNAME || 'srikar';
+    const adminPass = process.env.ADMIN_PASSWORD || 'srikar2727';
     const adminEmail = process.env.ADMIN_EMAIL || '';
     const hashedPassword = bcrypt.hashSync(adminPass, 10);
     db.prepare('INSERT OR IGNORE INTO users (username, password, email, role) VALUES (?, ?, ?, ?)').run(adminUser, hashedPassword, adminEmail, 'admin');

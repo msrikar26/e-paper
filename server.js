@@ -10,6 +10,27 @@ const db = require('./db');
 const app = express();
 const PORT = parseInt(process.env.PORT) || 3000;
 
+// ===== REDIRECT MIDDLEWARE (HTTP→HTTPS, www→non-www) =====
+const SITE_DOMAIN = 'newspulse.ryzn.pro';
+app.use((req, res, next) => {
+    const host = (req.get('host') || '').toLowerCase();
+    const proto = req.get('x-forwarded-proto') || (req.secure ? 'https' : 'http');
+
+    // Redirect www to non-www
+    if (host.startsWith('www.')) {
+        const target = `https://${SITE_DOMAIN}${req.originalUrl}`;
+        return res.redirect(301, target);
+    }
+
+    // Redirect HTTP to HTTPS (only when behind Railway/Cloudflare proxy)
+    if (proto !== 'https' && process.env.NODE_ENV === 'production') {
+        const target = `https://${host}${req.originalUrl}`;
+        return res.redirect(301, target);
+    }
+
+    next();
+});
+
 // ===== MIDDLEWARE =====
 app.use(cors());
 app.use(express.json());
@@ -806,7 +827,7 @@ app.get('/admin/', (req, res) => {
 // ===== START =====
 const http = require('http');
 const httpServer = http.createServer(app);
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 NewsPulse server running at http://localhost:${PORT}`);
     console.log(`📰 Frontend: http://localhost:${PORT}`);
     console.log(`🔧 Admin Panel: http://localhost:${PORT}/admin/`);
